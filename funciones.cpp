@@ -1,0 +1,166 @@
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+// GUARDAR COMO: funciones.cpp
+#include <iostream>
+#include <string>
+#include <cstring>
+#include "estructuras.h" // Conexión vital
+
+using namespace std;
+
+// --- HERRAMIENTAS ANTI-BLOQUEO (Lectura Segura) ---
+int leerEntero() {
+    string entrada;
+    int numero = 0;
+    while (true) {
+        getline(cin, entrada);
+        try {
+            if (!entrada.empty()) {
+                numero = stoi(entrada);
+                break;
+            }
+        }
+        catch (...) {
+            cout << "   [!] Dato invalido. Ingrese un numero entero: ";
+        }
+    }
+    return numero;
+}
+
+float leerFlotante() {
+    string entrada;
+    float numero = 0.0f;
+    while (true) {
+        getline(cin, entrada);
+        try {
+            if (!entrada.empty()) {
+                numero = stof(entrada);
+                break;
+            }
+        }
+        catch (...) {
+            cout << "   [!] Dato invalido. Ingrese un decimal: ";
+        }
+    }
+    return numero;
+}
+
+void leerTexto(char* destino, int tamanoMax) {
+    string entrada;
+    getline(cin, entrada);
+    if (entrada.length() >= tamanoMax) {
+        entrada = entrada.substr(0, tamanoMax - 1);
+    }
+    // Copia segura usando strcpy_s en MSVC
+    #ifdef _MSC_VER
+    strcpy_s(destino, tamanoMax, entrada.c_str());
+    #else
+    size_t len = entrada.copy(destino, tamanoMax - 1);
+    destino[len] = '\0';
+    #endif
+}
+
+// --- MÓDULOS DE LÓGICA ---
+
+void altaPlanta(ProductoPlanta catalogo[], int& totalPlantas) {
+    if (totalPlantas >= 100) {
+        cout << "\n[!] Memoria llena.\n";
+        return;
+    }
+    ProductoPlanta p;
+    cout << "\n--- NUEVA PLANTA ---\n";
+    cout << "ID Numerico: ";       p.idProducto = leerEntero();
+    cout << "Nombre Comun: ";      leerTexto(p.especie.nombreComun, 100);
+    cout << "Nombre Cientifico: "; leerTexto(p.especie.nombreCientifico, 100);
+    cout << "Familia: ";           leerTexto(p.especie.familia, 50);
+    cout << "Categoria: ";         leerTexto(p.categoria, 50);
+    cout << "Precio ($): ";        p.precio = leerFlotante();
+    cout << "Stock: ";             p.stock = leerEntero();
+
+    cout << ">> Cuidados <<\n";
+    cout << "Riego: ";             leerTexto(p.especie.cuidados.riego, 50);
+    cout << "Horas Luz: ";         p.especie.cuidados.horasLuz = leerEntero();
+    cout << "Temperatura: ";       p.especie.cuidados.temperatura = leerFlotante();
+
+    catalogo[totalPlantas] = p;
+    totalPlantas++;
+    cout << "\n[OK] Guardado.\n";
+}
+
+void bajaPlanta(ProductoPlanta catalogo[], int& totalPlantas) {
+    cout << "\n--- BAJA ---\n";
+    cout << "ID a eliminar: ";
+    int id = leerEntero();
+    int pos = -1;
+    for (int i = 0; i < totalPlantas; i++) {
+        if (catalogo[i].idProducto == id) { pos = i; break; }
+    }
+    if (pos != -1) {
+        cout << "Eliminar '" << catalogo[pos].especie.nombreComun << "'? (1=Si, 0=No): ";
+        if (leerEntero() == 1) {
+            for (int j = pos; j < totalPlantas - 1; j++) catalogo[j] = catalogo[j + 1];
+            totalPlantas--;
+            cout << "\n[OK] Eliminado.\n";
+        }
+    }
+    else { cout << "\n[!] No encontrado.\n"; }
+}
+
+void buscarPlanta(const ProductoPlanta catalogo[], int totalPlantas) {
+    cout << "\n--- BUSCAR ---\n";
+    cout << "ID a buscar: ";
+    int id = leerEntero();
+    bool encontrado = false;
+    for (int i = 0; i < totalPlantas; i++) {
+        if (catalogo[i].idProducto == id) {
+            cout << "\n>>> ENCONTRADO <<<\n";
+            cout << "ID: " << catalogo[i].idProducto << " | " << catalogo[i].especie.nombreComun << endl;
+            cout << "Cientifico: " << catalogo[i].especie.nombreCientifico << endl;
+            cout << "Precio: $" << catalogo[i].precio << endl;
+            cout << "Cuidados: " << catalogo[i].especie.cuidados.riego << endl;
+            encontrado = true;
+            break;
+        }
+    }
+    if (!encontrado) cout << "\n[!] No encontrado.\n";
+}
+
+void modificarPlanta(ProductoPlanta catalogo[], int totalPlantas) {
+    cout << "\n--- MODIFICAR ---\n";
+    cout << "ID a modificar: ";
+    int id = leerEntero();
+    int pos = -1;
+    for (int i = 0; i < totalPlantas; i++) {
+        if (catalogo[i].idProducto == id) { pos = i; break; }
+    }
+    if (pos != -1) {
+        cout << "Modificando: " << catalogo[pos].especie.nombreComun << endl;
+        cout << "AVISO: Se pediran TODOS los datos de nuevo.\n";
+        cout << "¿Continuar? (1=Si): ";
+        if (leerEntero() == 1) {
+            cout << "Nuevo ID: ";          catalogo[pos].idProducto = leerEntero();
+            cout << "Nombre Comun: ";      leerTexto(catalogo[pos].especie.nombreComun, 100);
+            cout << "Nombre Cientifico: "; leerTexto(catalogo[pos].especie.nombreCientifico, 100);
+            cout << "Familia: ";           leerTexto(catalogo[pos].especie.familia, 50);
+            cout << "Categoria: ";         leerTexto(catalogo[pos].categoria, 50);
+            cout << "Precio: ";            catalogo[pos].precio = leerFlotante();
+            cout << "Stock: ";             catalogo[pos].stock = leerEntero();
+            cout << "Riego: ";             leerTexto(catalogo[pos].especie.cuidados.riego, 50);
+            cout << "Horas Luz: ";         catalogo[pos].especie.cuidados.horasLuz = leerEntero();
+            cout << "Temperatura: ";       catalogo[pos].especie.cuidados.temperatura = leerFlotante();
+            cout << "\n[OK] Actualizado.\n";
+        }
+    }
+    else { cout << "\n[!] No encontrado.\n"; }
+}
+
+void mostrarCatalogo(const ProductoPlanta catalogo[], int totalPlantas) {
+    cout << "\n--- REPORTE ---\n";
+    if (totalPlantas == 0) cout << "Vacio.\n";
+    for (int i = 0; i < totalPlantas; i++) {
+        cout << "#" << (i + 1) << " | ID:" << catalogo[i].idProducto
+            << " | " << catalogo[i].especie.nombreComun << endl;
+    }
+}
